@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Register - Library System</title>
+  <style>
+    /* Reset & Base Styles */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    body { 
+      font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
+      background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #333;
+    }
+
+    /* Container Card */
+    .register-container {
+      background: rgba(255, 255, 255, 0.95);
+      padding: 40px;
+      border-radius: 20px;
+      box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+      width: 100%;
+      max-width: 420px;
+      text-align: center;
+    }
+
+    h1 { 
+      margin-bottom: 8px; 
+      color: #2d3436; 
+      font-size: 28px;
+    }
+
+    /* Info Alert Box */
+    .info-box {
+      background: #eef2ff;
+      border-left: 4px solid #667eea;
+      padding: 12px;
+      margin-bottom: 25px;
+      border-radius: 6px;
+      text-align: left;
+    }
+
+    .muted { 
+      color: #555; 
+      font-size: 13px; 
+      line-height: 1.5;
+    }
+
+    /* Form Elements */
+    .form-group {
+      text-align: left;
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 8px;
+      font-size: 14px;
+      color: #444;
+    }
+
+    input { 
+      width: 100%; 
+      padding: 12px 16px; 
+      font-size: 15px; 
+      border: 2px solid #eee;
+      border-radius: 10px;
+      transition: all 0.3s ease;
+      outline: none;
+    }
+
+    input:focus {
+      border-color: #667eea;
+      box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+    }
+
+    button { 
+      width: 100%;
+      padding: 14px;
+      background: #764ba2;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      margin-top: 10px;
+    }
+
+    button:hover {
+      background: #6a4191;
+      box-shadow: 0 5px 15px rgba(118, 75, 162, 0.3);
+    }
+
+    /* Message States */
+    .ok { 
+      margin-top: 20px;
+      padding: 12px;
+      background-color: #d1fae5;
+      color: #065f46;
+      border-radius: 8px;
+      font-size: 14px;
+      display: none; /* Hidden by default */
+    }
+
+    .error { 
+      margin-top: 15px;
+      font-size: 13px;
+      color: #d63031;
+      font-weight: 500;
+    }
+
+    .footer-text { 
+      margin-top: 25px;
+      font-size: 14px;
+      color: #636e72; 
+    }
+
+    .footer-text a { 
+      color: #764ba2;
+      text-decoration: none; 
+      font-weight: bold;
+    }
+
+    .footer-text a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="register-container">
+    <h1>Daftar Akun</h1>
+    
+    <div class="info-box">
+      <p class="muted">💡 <b>Hanya untuk User.</b> Akun Admin dikelola khusus oleh sistem pusat.</p>
+    </div>
+
+    <div class="form-group">
+      <label for="username">Pilih Username</label>
+      <input id="username" placeholder="contoh: pembaca_setia" />
+    </div>
+
+    <div class="form-group">
+      <label for="password">Password</label>
+      <input id="password" type="password" placeholder="Buat password yang kuat" />
+    </div>
+
+    <button id="btnRegister">Buat Akun</button>
+
+    <div id="ok" class="ok"></div>
+    <div id="out" class="error"></div>
+
+    <div class="footer-text">
+      Sudah punya akun? <a href="/login.html">Login di sini</a>
+    </div>
+  </div>
+
+  <script>
+    const API = "http://localhost:3000";
+
+    document.getElementById("btnRegister").addEventListener("click", async () => {
+      const btn = document.getElementById("btnRegister");
+      const username = document.getElementById("username").value.trim();
+      const password = document.getElementById("password").value;
+      const okDiv = document.getElementById("ok");
+      const outDiv = document.getElementById("out");
+
+      // Reset state
+      okDiv.style.display = "none";
+      okDiv.textContent = "";
+      outDiv.textContent = "";
+
+      if (!username || !password) {
+        outDiv.textContent = "Harap isi semua kolom!";
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = "Mendaftarkan...";
+
+      try {
+        const res = await fetch(`${API}/api/register`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username, password })
+        });
+
+        const data = await res.json();
+        
+        if (!res.ok) {
+          outDiv.textContent = data.message || "Gagal mendaftar. Username mungkin sudah ada.";
+          btn.disabled = false;
+          btn.textContent = "Buat Akun";
+          return;
+        }
+
+        // Tampilkan pesan sukses
+        okDiv.style.display = "block";
+        okDiv.innerHTML = `<strong>Berhasil!</strong><br>Akun dengan ID #${data.userId} telah aktif.`;
+        
+        btn.style.background = "#2ecc71";
+        btn.textContent = "Selesai!";
+
+        // Opsional: Redirect otomatis setelah 2 detik
+        setTimeout(() => {
+          window.location.href = "/login.html";
+        }, 2500);
+
+      } catch (e) {
+        outDiv.textContent = "Terjadi kesalahan koneksi: " + e.message;
+        btn.disabled = false;
+        btn.textContent = "Buat Akun";
+      }
+    });
+  </script>
+</body>
+</html>

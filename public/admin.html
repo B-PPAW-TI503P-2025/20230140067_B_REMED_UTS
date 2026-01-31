@@ -1,0 +1,298 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard - Library System</title>
+  <style>
+    :root {
+      --primary: #4f46e5;
+      --secondary: #64748b;
+      --danger: #ef4444;
+      --success: #10b981;
+      --bg: #f8fafc;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Inter', sans-serif; background: var(--bg); color: #1e293b; }
+
+    .navbar {
+      background: white; padding: 1rem 2rem; display: flex;
+      justify-content: space-between; align-items: center;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 100;
+    }
+
+    .container { max-width: 1000px; margin: 2rem auto; padding: 0 1rem; }
+
+    .card { background: white; border-radius: 12px; padding: 1.5rem; border: 1px solid #e2e8f0; margin-bottom: 2rem; }
+    h2 { font-size: 0.9rem; color: var(--secondary); text-transform: uppercase; margin-bottom: 1rem; letter-spacing: 0.05em; font-weight: 700; }
+
+    table { width: 100%; border-collapse: collapse; }
+    th { text-align: left; padding: 12px; border-bottom: 2px solid #edf2f7; color: #64748b; font-size: 0.85rem; }
+    td { padding: 12px; border-bottom: 1px solid #edf2f7; font-size: 0.9rem; }
+    tr:hover { background-color: #fcfdfe; }
+
+    /* Forms */
+    .form-inline { display: grid; grid-template-columns: 2fr 2fr 1fr auto; gap: 10px; align-items: end; }
+    .form-group { display: flex; flex-direction: column; gap: 5px; }
+    label { font-size: 0.8rem; font-weight: 600; color: #475569; }
+    input { padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px; outline: none; font-family: inherit; }
+    input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1); }
+
+    /* Buttons */
+    button { padding: 8px 16px; border-radius: 6px; cursor: pointer; border: none; font-weight: 600; transition: 0.2s; font-family: inherit; }
+    .btn-add { background: var(--primary); color: white; }
+    .btn-edit { background: #e0e7ff; color: var(--primary); margin-right: 5px; }
+    .btn-del { background: #fee2e2; color: var(--danger); font-size: 0.8rem; }
+    .btn-logout { background: #f1f5f9; color: var(--danger); }
+    button:hover { opacity: 0.8; }
+
+    /* Badges */
+    .badge { padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; }
+    .badge-geo { background: #f1f5f9; color: #475569; font-family: monospace; }
+
+    /* Modal */
+    #editModal {
+      display: none; position: fixed; z-index: 1000; left: 0; top: 0;
+      width: 100%; height: 100%; background: rgba(0,0,0,0.5);
+      align-items: center; justify-content: center;
+    }
+    .modal-content { background: white; padding: 2rem; border-radius: 12px; width: 400px; }
+    .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+  </style>
+</head>
+<body>
+
+  <nav class="navbar">
+    <div>
+      <h1 style="font-size: 1.25rem;">Library Admin</h1>
+      <span style="font-size: 0.8rem; color: var(--success)">● System Management</span>
+    </div>
+    <button id="btnLogout" class="btn-logout">Logout</button>
+  </nav>
+
+  <div class="container">
+    <div class="card">
+      <h2>Tambah Buku Baru</h2>
+      <div class="form-inline">
+        <div class="form-group">
+          <label>Judul Buku</label>
+          <input id="title" placeholder="Contoh: Harry Potter" />
+        </div>
+        <div class="form-group">
+          <label>Penulis</label>
+          <input id="author" placeholder="Nama penulis" />
+        </div>
+        <div class="form-group">
+          <label>Stok</label>
+          <input id="stock" type="number" value="1" />
+        </div>
+        <button id="btnAdd" class="btn-add">Tambah</button>
+      </div>
+      <div id="out" style="color:red; font-size:0.8rem; margin-top:10px;"></div>
+    </div>
+
+    <div class="card">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+        <h2>Koleksi Buku</h2>
+        <button onclick="loadBooks()" style="font-size: 0.8rem; background:none; color:var(--primary); text-decoration:underline;">Refresh Buku</button>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Judul & Penulis</th>
+            <th>Stok</th>
+            <th style="text-align:right">Aksi</th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+
+    <div class="card" style="border-top: 4px solid var(--primary);">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+        <h2>Riwayat Peminjaman (Logs)</h2>
+        <button onclick="loadLogs()" style="font-size: 0.8rem; background:none; color:var(--primary); text-decoration:underline;">Refresh Logs</button>
+      </div>
+      <div style="overflow-x: auto;">
+        <table>
+          <thead>
+            <tr>
+              <th>Waktu</th>
+              <th>User ID</th>
+              <th>Book ID</th>
+              <th>Lokasi (Lat, Lon)</th>
+            </tr>
+          </thead>
+          <tbody id="logBody"></tbody>
+        </table>
+      </div>
+      <div id="logOut" style="color:red; font-size:0.8rem; margin-top:10px;"></div>
+    </div>
+  </div>
+
+  <div id="editModal">
+    <div class="modal-content">
+      <h2 style="color: #1e293b; margin-bottom: 1.5rem;">Edit Data Buku</h2>
+      <input type="hidden" id="editId">
+      <div class="form-group" style="margin-bottom: 15px;">
+        <label>Judul Buku</label>
+        <input id="editTitle" type="text">
+      </div>
+      <div class="form-group" style="margin-bottom: 15px;">
+        <label>Penulis</label>
+        <input id="editAuthor" type="text">
+      </div>
+      <div class="form-group" style="margin-bottom: 15px;">
+        <label>Jumlah Stok</label>
+        <input id="editStock" type="number">
+      </div>
+      <div class="modal-actions">
+        <button onclick="closeModal()" class="btn-logout" style="color:#64748b; background: #eee;">Batal</button>
+        <button id="btnSaveUpdate" class="btn-add">Simpan</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API = "http://localhost:3000";
+
+    // Guard admin
+    if (localStorage.getItem("role") !== "admin") window.location.href = "/login.html";
+
+    function adminHeaders() {
+      return { "Content-Type": "application/json", "x-user-role": "admin" };
+    }
+
+    document.getElementById("btnLogout").addEventListener("click", () => {
+      localStorage.clear();
+      window.location.href = "/login.html";
+    });
+
+    // --- BOOKS LOGIC ---
+    async function loadBooks() {
+      const res = await fetch(`${API}/api/books`);
+      const books = await res.json();
+      const tbody = document.getElementById("tbody");
+      tbody.innerHTML = "";
+      books.forEach(b => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td><span style="color:#94a3b8">#</span>${b.id}</td>
+          <td>
+            <div style="font-weight:600">${b.title}</div>
+            <div style="font-size:0.8rem; color:#64748b">${b.author}</div>
+          </td>
+          <td><b style="color:var(--primary)">${b.stock}</b></td>
+          <td style="text-align:right">
+            <button class="btn-edit" onclick="openEditModal(${b.id}, '${String(b.title).replaceAll("'", "\\'")}', '${String(b.author).replaceAll("'", "\\'")}', ${b.stock})">Edit</button>
+            <button class="btn-del" onclick="deleteBook(${b.id})">Hapus</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // --- LOGS LOGIC (✅ FIX: endpoint yang benar) ---
+    async function loadLogs() {
+      const logOut = document.getElementById("logOut");
+      logOut.textContent = "";
+
+      try {
+        // ✅ HARUS /api/borrow/logs
+        const res = await fetch(`${API}/api/borrow/logs`, { headers: adminHeaders() });
+        const logs = await res.json();
+
+        if (!res.ok) {
+          logOut.textContent = logs?.message || "Gagal load logs";
+          return;
+        }
+
+        const logBody = document.getElementById("logBody");
+        logBody.innerHTML = "";
+
+        logs.forEach(l => {
+          const date = new Date(l.borrowDate).toLocaleString('id-ID');
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td style="font-size: 0.8rem; color: #64748b;">${date}</td>
+            <td><span class="badge" style="background: #eef2ff; color: #4f46e5;">User ${l.userId}</span></td>
+            <td><span class="badge" style="background: #f0fdf4; color: #166534;">Book ${l.bookId}</span></td>
+            <td>
+              <span class="badge badge-geo">
+                ${typeof l.latitude === "number" ? l.latitude.toFixed(4) : '-'},
+                ${typeof l.longitude === "number" ? l.longitude.toFixed(4) : '-'}
+              </span>
+            </td>
+          `;
+          logBody.appendChild(tr);
+        });
+
+      } catch (e) {
+        console.error(e);
+        logOut.textContent = "Gagal memuat logs. Cek console.";
+      }
+    }
+
+    // CRUD Ops (Delete, Add, Update)
+    async function deleteBook(id) {
+      if (!confirm("Hapus buku?")) return;
+      await fetch(`${API}/api/books/${id}`, { method: "DELETE", headers: adminHeaders() });
+      loadBooks();
+      loadLogs();
+    }
+
+    document.getElementById("btnAdd").addEventListener("click", async () => {
+      const title = document.getElementById("title").value;
+      const author = document.getElementById("author").value;
+      const stock = Number(document.getElementById("stock").value);
+
+      await fetch(`${API}/api/books`, {
+        method: "POST",
+        headers: adminHeaders(),
+        body: JSON.stringify({ title, author, stock })
+      });
+
+      document.getElementById("title").value = "";
+      document.getElementById("author").value = "";
+
+      loadBooks();
+      loadLogs();
+    });
+
+    const modal = document.getElementById("editModal");
+    function openEditModal(id, title, author, stock) {
+      document.getElementById("editId").value = id;
+      document.getElementById("editTitle").value = title;
+      document.getElementById("editAuthor").value = author;
+      document.getElementById("editStock").value = stock;
+      modal.style.display = "flex";
+    }
+    function closeModal() { modal.style.display = "none"; }
+
+    document.getElementById("btnSaveUpdate").addEventListener("click", async () => {
+      const id = document.getElementById("editId").value;
+      const payload = {
+        title: document.getElementById("editTitle").value,
+        author: document.getElementById("editAuthor").value,
+        stock: Number(document.getElementById("editStock").value)
+      };
+
+      await fetch(`${API}/api/books/${id}`, {
+        method: "PUT",
+        headers: adminHeaders(),
+        body: JSON.stringify(payload)
+      });
+
+      closeModal();
+      loadBooks();
+      loadLogs();
+    });
+
+    // Inisialisasi
+    loadBooks();
+    loadLogs();
+  </script>
+</body>
+</html>

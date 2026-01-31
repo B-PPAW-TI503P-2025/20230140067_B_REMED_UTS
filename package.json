@@ -16,5 +16,13 @@
   "bugs": {
     "url": "https://github.com/B-PPAW-TI503P-2025/20230140067_B_REMED_UTS/issues"
   },
-  "homepage": "https://github.com/B-PPAW-TI503P-2025/20230140067_B_REMED_UTS#readme"
+  "homepage": "https://github.com/B-PPAW-TI503P-2025/20230140067_B_REMED_UTS#readme",
+  "dependencies": {
+    "express": "^5.2.1",
+    "mysql2": "^3.16.2",
+    "sequelize": "^6.37.7"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.11"
+  }
 }
